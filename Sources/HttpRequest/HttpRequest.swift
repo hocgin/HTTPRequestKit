@@ -1,7 +1,3 @@
-struct HttpRequest {
-    var text = "Hello, World!"
-}
-
 import Foundation
 import Combine
 
@@ -116,7 +112,7 @@ public enum AuthType {
   case none
 }
 
-public struct Request {
+public struct HttpRequest {
   public var baseURL: URL
   public var path: String
   public var method: HTTPMethod
@@ -204,7 +200,7 @@ public struct Request {
   }
 }
 
-extension Request {
+extension HttpRequest {
   var pathAppendedURL: URL {
     var url = baseURL
     url.appendPathComponent(path)
