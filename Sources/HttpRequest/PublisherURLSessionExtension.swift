@@ -9,7 +9,7 @@ import Combine
 import Foundation
 
 public extension Publisher where Output == (data: Data, response: URLResponse) {
-  
+
   func assumeHTTP() -> AnyPublisher<(data: Data, response: HTTPURLResponse), HTTPError> {
     tryMap { (data: Data, response: URLResponse) in
       guard let http = response as? HTTPURLResponse else { throw HTTPError.nonHTTPResponse }
@@ -17,6 +17,7 @@ public extension Publisher where Output == (data: Data, response: URLResponse) {
     }
     .mapError { error in
       if error is HTTPError {
+        // swiftlint:disable force_cast
         return error as! HTTPError
       } else {
         return HTTPError.networkError(error)
@@ -27,12 +28,12 @@ public extension Publisher where Output == (data: Data, response: URLResponse) {
 }
 
 public extension Publisher where Output == (data: Data, response: HTTPURLResponse), Failure == HTTPError {
-  
+
   func responseData() -> AnyPublisher<Data, HTTPError> {
     tryMap { (data: Data, response: HTTPURLResponse) -> Data in
       switch response.statusCode {
       case 200...299: return data
-      case 401,  403:
+      case 401, 403:
         // wait code
         throw HTTPError.authError(response.statusCode)
       case 400...499: throw HTTPError.requestFailed(response.statusCode)
@@ -47,20 +48,19 @@ public extension Publisher where Output == (data: Data, response: HTTPURLRespons
 }
 
 extension Publisher where Output == (data: Data, response: HTTPURLResponse), Failure == HTTPError {
-  
+
   func retryLimit(when: @escaping () -> Bool) -> AnyPublisher<(data: Data, response: HTTPURLResponse), HTTPError> {
-    map { (data, response) in
+    map { data, response in
       Swift.print("No more errors...")
       return (data: data, response: response)
     }
     .eraseToAnyPublisher()
   }
-  
-  
+
 }
 
 public extension Publisher where Output == Data, Failure == HTTPError {
-  
+
   func decoding<D: Decodable, Decoder: TopLevelDecoder>(
     _ type: D.Type,
     decoder: Decoder
@@ -72,9 +72,9 @@ public extension Publisher where Output == Data, Failure == HTTPError {
         } else {
           return error as! HTTPError
         }
-        
+
       }
       .eraseToAnyPublisher()
   }
-  
+
 }
