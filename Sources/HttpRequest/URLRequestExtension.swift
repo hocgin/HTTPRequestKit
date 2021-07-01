@@ -10,7 +10,7 @@ import Foundation
 internal extension URLRequest {
   private var headerField: String { "Authorization" }
   private var contentTypeHeader: String { "Content-Type" }
-  
+
   mutating func setupRequest(
     headers: [String: String]?,
     authType: AuthType,
@@ -23,10 +23,10 @@ internal extension URLRequest {
     setupAuthorization(with: authType)
     httpMethod = method.rawValue
   }
-  
+
   mutating func setupAuthorization(with authType: AuthType) {
     switch authType {
-    case .basic(let username, let password):
+    case let .basic(username, password):
       let loginString = String(format: "%@:%@", username, password)
       guard let data = loginString.data(using: .utf8) else { return }
       setValue("Basic \(data.base64EncodedString())", forHTTPHeaderField: headerField)
