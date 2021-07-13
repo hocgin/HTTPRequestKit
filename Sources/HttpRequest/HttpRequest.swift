@@ -30,12 +30,41 @@ public struct ContentType: Equatable {
 }
 
 public struct DataType {
+  public init(
+    data: Data? = nil,
+    queryItems: [URLQueryItem]? = nil,
+    parameters: [String : Any]? = nil
+  ) {
+    self.data = data
+    self.queryItems = queryItems
+    self.parameters = parameters
+  }
+
   public var data: Data?
   public var queryItems: [URLQueryItem]?
   public var parameters: [String: Any]?
 
   public static var none: DataType {
     .init(data: nil)
+  }
+
+  static public func sendData<T: Encodable>(
+    items: [URLQueryItem]? = nil,
+    params: [String: Any]? = nil,
+    encodable: T? = nil,
+    parameters: T? = nil
+  ) -> Self {
+    if items != nil {
+        return .init(queryItems: items!)
+    } else if params != nil {
+        return .init(parameters: params!)
+    } else if encodable != nil {
+      return .encodable(input: encodable)
+    } else if parameters != nil {
+      return .parameters(input: parameters)
+    } else {
+      return .none
+    }
   }
 
   static public func query(with items: [URLQueryItem] ) -> Self {
@@ -71,6 +100,7 @@ public struct DataType {
 }
 
 public struct HTTPError: Error, Equatable {
+
   public static func == (lhs: HTTPError, rhs: HTTPError) -> Bool {
     return lhs.description == rhs.description
   }
