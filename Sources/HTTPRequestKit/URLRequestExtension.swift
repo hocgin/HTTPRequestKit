@@ -13,9 +13,9 @@ internal extension URLRequest {
 
   mutating func setupRequest(
     headers: [String: String]?,
-    authType: AuthType,
-    contentType: ContentType,
-    method: HTTPMethod
+    authType: HTTPRequest.AuthType,
+    contentType: HTTPRequest.ContentType,
+    method: HTTPRequest.Method
   ) {
     let contentTypeHeaderName = contentTypeHeader
     allHTTPHeaderFields = headers
@@ -24,7 +24,7 @@ internal extension URLRequest {
     httpMethod = method.rawValue
   }
 
-  mutating func setupAuthorization(with authType: AuthType) {
+  mutating func setupAuthorization(with authType: HTTPRequest.AuthType) {
     switch authType {
     case let .basic(username, password):
       let loginString = String(format: "%@:%@", username, password)

@@ -1,7 +1,7 @@
     import XCTest
-    @testable import HttpRequest
+    @testable import HTTPRequestKit
 
-    final class HttpRequestTests: XCTestCase {
+    final class HTTPRequestTests: XCTestCase {
         func testExample() {
             // This is an example of a functional test case.
             // Use XCTAssert and related functions to verify your tests produce the correct

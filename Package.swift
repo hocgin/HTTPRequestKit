@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "HttpRequest",
+  name: "HTTPRequestKit",
   platforms: [
     .iOS(.v14),
     .macOS(.v10_15),
@@ -12,15 +12,15 @@ let package = Package(
     .watchOS(.v3)
   ],
   products: [
-    .library(name: "HttpRequest", targets: ["HttpRequest"]),
+    .library(name: "HTTPRequestKit", targets: ["HTTPRequestKit"]),
   ],
   dependencies: [],
   targets: [
     .target(
-      name: "HttpRequest",
+      name: "HTTPRequestKit",
       dependencies: []),
     .testTarget(
-      name: "HttpRequestTests",
-      dependencies: ["HttpRequest"]),
+      name: "HTTPRequestTests",
+      dependencies: ["HTTPRequestKit"]),
   ]
 )
