@@ -1,11 +1,50 @@
-    import XCTest
-    @testable import HTTPRequestKit
+@testable import HTTPRequestKit
 
-    final class HTTPRequestTests: XCTestCase {
-        func testExample() {
-            // This is an example of a functional test case.
-            // Use XCTAssert and related functions to verify your tests produce the correct
-            // results.
-            // XCTAssertEqual(HttpRequest().text, "Hello, World!")
-        }
+import Combine
+import Foundation
+import Testing
+
+struct TestResp: Codable {
+    var message: String
+}
+
+struct HTTPRequestTests {
+    @Test func testExample() async throws {
+        // This is an example of a functional test case.
+        // Use XCTAssert and related functions to verify your tests produce the correct
+        // results.
+        // XCTAssertEqual(HttpRequest().text, "Hello, World!")
+
+        let request = HTTPRequest.build(baseURL: "https://9cb3e59a017449b081da7defd93dc684.api.mockbin.io/")
+
+        let urlRequest = request.asURLRequest()
+        debugPrint("isURLRequest \(urlRequest is URLRequest)")
+
+        /// 方式 1
+        let result1 = try await request.run(String.self)
+        debugPrint("result1 = \(result1)")
+        /// 方式 2
+        let result2: (Data, URLResponse) = try await request.response()
+        debugPrint("result2 0 = \(result2.0), 1 = \(result2.1)")
+        /// 方式 3
+        let result3 = try await request.run(TestResp.self)
+        debugPrint("result3 = \(result3)")
+
+        /// 方式 4
+        let cancel = request.sink(success: { (result4: TestResp) in
+            debugPrint("result4 = \(result4)")
+        })
+        /// 方式5
+        let publish: AnyPublisher<TestResp, HTTPRequest.HRError> = request.publish()
+        let cancel5 = publish.sink(
+            receiveCompletion: { debugPrint("receiveCompletion = \($0)") },
+            receiveValue: { result5 in
+                debugPrint("result5 = \(result5)")
+            }
+        )
+
+        try? await Task.sleep(nanoseconds: 345678987654)
+
+//        request.send(scheduler: .shared)
     }
+}

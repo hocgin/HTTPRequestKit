@@ -20,6 +20,9 @@ extension HTTPRequest {
     public static var nonHTTPResponse: Self {
       .init(description: "Non-HTTP response received", reason: nil)
     }
+    public static var irregularError: Self {
+      .init(description: "Irregular Error", reason: nil)
+    }
 
     public static var missingTokenFromIOS: Self {
       .init(description: "JWT token are missing on ios app", reason: nil)
