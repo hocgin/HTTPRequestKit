@@ -8,7 +8,7 @@
 import Combine
 import Foundation
 
-extension Publisher where Output: Sendable, Failure == Error {
+public extension Publisher where Output: Sendable, Failure == Error {
     func async() async throws -> Output {
         var cancellable: AnyCancellable?
         defer { cancellable?.cancel() }
