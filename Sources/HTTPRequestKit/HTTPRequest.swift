@@ -118,7 +118,7 @@ public struct HTTPRequest {
             .eraseToAnyPublisher()
     }
 
-    public func publish<D: Decodable, S: Scheduler>(
+    public func publisher<D: Decodable, S: Scheduler>(
         urlSession: URLSession = URLSession.shared,
         jsonDecoder: JSONDecoder = .default,
         scheduler: S = DispatchQueue.main
@@ -130,6 +130,17 @@ public struct HTTPRequest {
             .catch { (error: HTTPRequest.HRError) -> AnyPublisher<D, HTTPRequest.HRError> in
                 return Fail(error: error).eraseToAnyPublisher()
             }
+            .receive(on: scheduler)
+            .eraseToAnyPublisher()
+    }
+
+    public func dataTaskPublisher<S: Scheduler>(
+        urlSession: URLSession = URLSession.shared,
+        scheduler: S = DispatchQueue.main
+    ) -> AnyPublisher<Data, any Error> {
+        urlSession.dataTaskPublisher(for: asURLRequest())
+            .tryMap { (data, _: URLResponse) in data }
+            .mapError { $0 as any Error }
             .receive(on: scheduler)
             .eraseToAnyPublisher()
     }

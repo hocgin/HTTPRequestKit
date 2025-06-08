@@ -1,8 +1,14 @@
+//
+//  FlexibleString.swift
+//  HTTPRequestKit
+//
+//  Created by hocgin on 2025/6/9.
+//
 
-struct FlexibleString: Codable {
+public struct FlexibleString: Codable {
     let value: String
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
 
         // 尝试直接解码成字符串
