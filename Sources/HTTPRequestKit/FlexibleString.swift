@@ -5,7 +5,7 @@
 //  Created by hocgin on 2025/6/9.
 //
 
-public struct FlexibleString: Codable {
+public struct FlexibleString: Codable, Sendable {
     let value: String
 
     public init(from decoder: Decoder) throws {

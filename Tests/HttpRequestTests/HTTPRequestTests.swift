@@ -87,3 +87,23 @@ let jsonDecoder: JSONDecoder = {
 
     let result = try await publisher.values.first(where: { _ in true })
 }
+
+@Test func example2() async throws {
+    let custom: HTTPHeaders = [
+        .defaultAcceptEncoding,
+        .defaultAcceptLanguage,
+        .userAgent(HTTPHeader.makeUserAgent()),
+    ]
+
+    let request = HTTPRequest.build(
+        baseURL: "https://9cb3e59a017449b081da7defd93dc684.api.mockbin.io/",
+        headers: custom
+    )
+
+    let publisher = request.dataTaskPublisher()
+        .decode(type: FlexibleString.self, decoder: jsonDecoder)
+        .eraseToAnyPublisher()
+
+    let v = try await publisher.async()
+    debugPrint("v = \(v)")
+}
