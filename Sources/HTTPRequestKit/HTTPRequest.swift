@@ -5,40 +5,44 @@ public struct HTTPRequest {
     public var baseURL: URL
     public var path: String
     public var method: Method
-    public var headers: [String: String]?
-    public var authType: AuthType
-    public var contentType: ContentType
+    public var headers: HTTPHeaders
     public var dataType: DataType
     let asURLRequest: () -> URLRequest
 
     // swiftlint:disable function_parameter_count
     static func getRequest(
-        _ url: URL, headers: [String: String]?, dataType: DataType,
-        authType: AuthType, contentType: ContentType, method: Method
+        _ url: URL,
+        headers: HTTPHeaders,
+        dataType: DataType,
+        method: Method
     ) -> URLRequest {
         let url = url.queryWith(items: dataType.queryItems, params: dataType.parameters)
         var request = URLRequest(url: url)
-        request.setupRequest(headers: headers, authType: authType, contentType: contentType, method: .get)
+        request.setupRequest(headers: headers, method: .get)
         return request
     }
 
     static func putPatchPostRequest(
-        _ url: URL, headers: [String: String]?, dataType: DataType,
-        authType: AuthType, contentType: ContentType, method: Method
+        _ url: URL,
+        headers: HTTPHeaders,
+        dataType: DataType,
+        method: Method
     ) -> URLRequest {
         var request = URLRequest(url: url)
-        request.setupRequest(headers: headers, authType: authType, contentType: contentType, method: method)
+        request.setupRequest(headers: headers, method: method)
         request.httpBody = dataType.data
         return request
     }
 
     static func deleteRequest(
-        _ url: URL, headers: [String: String]?, dataType: DataType,
-        authType: AuthType, contentType: ContentType, method: Method
+        _ url: URL,
+        headers: HTTPHeaders,
+        dataType: DataType,
+        method: Method
     ) -> URLRequest {
         var request = URLRequest(url: url)
         request.allowsCellularAccess = true
-        request.setupRequest(headers: headers, authType: authType, contentType: contentType, method: method)
+        request.setupRequest(headers: headers, method: method)
         request.httpBody = dataType.data
         return request
     }
@@ -46,10 +50,8 @@ public struct HTTPRequest {
     public static func build(
         baseURL: URL,
         method: Method = .get,
-        headers: [String: String]? = nil,
-        authType: AuthType = .none,
+        headers: HTTPHeaders = .default,
         path: String = "",
-        contentType: ContentType = .json,
         dataType: DataType = .none,
         urlQueryItems: [URLQueryItem]? = nil
     ) -> Self {
@@ -58,28 +60,25 @@ public struct HTTPRequest {
 
         return .init(
             baseURL: baseURL, path: path, method: method, headers: headers,
-            authType: authType, contentType: contentType, dataType: dataType
+            dataType: dataType
         ) { () -> URLRequest in
 
             switch method {
             case .get:
 
                 return getRequest(
-                    url, headers: headers, dataType: dataType, authType: authType,
-                    contentType: contentType, method: .get
+                    url, headers: headers, dataType: dataType, method: .get
                 )
 
             case .put, .patch, .post:
 
                 return putPatchPostRequest(
-                    url, headers: headers, dataType: dataType, authType: authType,
-                    contentType: contentType, method: method
+                    url, headers: headers, dataType: dataType, method: method
                 )
 
             case .delete:
                 return deleteRequest(
-                    url, headers: headers, dataType: dataType, authType: authType,
-                    contentType: contentType, method: method
+                    url, headers: headers, dataType: dataType, method: method
                 )
             }
         }
@@ -88,10 +87,8 @@ public struct HTTPRequest {
     public static func build(
         baseURL: String,
         method: Method = .get,
-        headers: [String: String]? = nil,
-        authType: AuthType = .none,
+        headers: HTTPHeaders = .default,
         path: String = "",
-        contentType: ContentType = .json,
         dataType: DataType = .none,
         urlQueryItems: [URLQueryItem]? = nil
     ) -> Self {
@@ -99,9 +96,7 @@ public struct HTTPRequest {
             baseURL: URL(string: baseURL)!,
             method: method,
             headers: headers,
-            authType: authType,
             path: path,
-            contentType: contentType,
             dataType: dataType,
             urlQueryItems: urlQueryItems
         )

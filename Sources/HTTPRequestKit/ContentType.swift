@@ -7,6 +7,7 @@
 
 import Foundation
 
+@available(*, deprecated, renamed: "x", message: "x")
 public extension HTTPRequest {
     struct ContentType: Equatable {
         public var content: String

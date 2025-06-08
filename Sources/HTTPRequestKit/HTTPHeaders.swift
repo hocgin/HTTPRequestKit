@@ -358,31 +358,16 @@ public extension HTTPHeader {
     /// See the [User-Agent header documentation](https://tools.ietf.org/html/rfc7231#section-5.5.3).
     ///
     /// Example: `iOS Example/1.0 (org.alamofire.iOS-Example; build:1; iOS 13.0.0) Alamofire/5.0.0`
-    /// ==============================
-    //    "Mozilla/5.0 (iPhone13,3; U; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Mobile/15E148 Safari/602.1",
-    //    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
-    //    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
-    //    "Mozilla/5.0 (Linux; Android 11; M2102K1G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Mobile Safari/537.36"
     static let defaultUserAgent: HTTPHeader = {
-        let userAgent = makeUserAgent()
-        return .userAgent(userAgent)
-    }()
+        let info = Bundle.main.infoDictionary
+        let executable = (info?["CFBundleExecutable"] as? String) ??
+            (ProcessInfo.processInfo.arguments.first?.split(separator: "/").last.map(String.init)) ??
+            "Unknown"
+        let bundle = info?["CFBundleIdentifier"] as? String ?? "Unknown"
+        let appVersion = info?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        let appBuild = info?["CFBundleVersion"] as? String ?? "Unknown"
 
-    static func makeUserAgent() -> String {
-        var model = {
-            var systemInfo = utsname()
-            uname(&systemInfo)
-            return withUnsafePointer(to: &systemInfo.machine) {
-                $0.withMemoryRebound(to: CChar.self, capacity: 1) {
-                    String(cString: $0)
-                }
-            }
-        }()
-
-        // Safari 内核版本固定为 605.1.15，一般无需修改
-        let safariVersion = "604.1"
-
-        let osNameVersion: (String, String, String) = {
+        let osNameVersion: String = {
             let version = ProcessInfo.processInfo.operatingSystemVersion
             let versionString = "\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)"
             let osName: String = {
@@ -414,11 +399,80 @@ public extension HTTPHeader {
                 return "Unknown"
                 #endif
             }()
+
+            return "\(osName) \(versionString)"
+        }()
+
+        let alamofireVersion = "HTTPRequestKit/1.0.0"
+
+        let userAgent = "\(executable)/\(appVersion) (\(bundle); build:\(appBuild); \(osNameVersion)) \(alamofireVersion)"
+
+        return .userAgent(userAgent)
+    }()
+
+    /// ==============================
+    ///    "Mozilla/5.0 (iPhone13,3; U; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Mobile/15E148 Safari/602.1",
+    ///    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+    ///    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
+    ///    "Mozilla/5.0 (Linux; Android 11; M2102K1G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Mobile Safari/537.36"
+
+    /// Mozilla/5.0 (iPhone17,3; CPU iPhone17,3 OS 18_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3.1 Mobile/15E148 Safari/604.1
+    static func makeUserAgent() -> String {
+        let model = {
+            #if targetEnvironment(simulator)
+            let identifier = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"]!
+            #else
+            var systemInfo = utsname()
+            uname(&systemInfo)
+            let machineMirror = Mirror(reflecting: systemInfo.machine)
+            let identifier = machineMirror.children.reduce("") { identifier, element in
+                guard let value = element.value as? Int8, value != 0 else { return identifier }
+                return identifier + String(UnicodeScalar(UInt8(value)))
+            }
+            #endif
+            return identifier
+        }()
+
+        // Safari 内核版本固定为 605.1.15，一般无需修改
+        let safariVersion = "604.1"
+
+        let osNameVersion: (String, String, String) = {
+            let version = ProcessInfo.processInfo.operatingSystemVersion
+            let versionString = "\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)"
+            let osName: String = {
+                #if os(iOS)
+                #if targetEnvironment(macCatalyst)
+                return "macOS(Catalyst)"
+                #else
+                return "iPhone"
+                #endif
+                #elseif os(watchOS)
+                return "watchOS"
+                #elseif os(tvOS)
+                return "tvOS"
+                #elseif os(macOS)
+                #if targetEnvironment(macCatalyst)
+                return "macOS(Catalyst)"
+                #else
+                return "macOS"
+                #endif
+                #elseif swift(>=5.9.2) && os(visionOS)
+                return "visionOS"
+                #elseif os(Linux)
+                return "Linux"
+                #elseif os(Windows)
+                return "Windows"
+                #elseif os(Android)
+                return "Android"
+                #else
+                return "Unknown"
+                #endif
+            }()
             let systemVersion = versionString.replacingOccurrences(of: ".", with: "_")
             return (osName, versionString, systemVersion)
         }()
 
-        return "Mozilla/5.0 (\(model); CPU \(model) OS \(osNameVersion.2) like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/\(osNameVersion.1) Mobile/15E148 Safari/\(safariVersion)"
+        return "Mozilla/5.0 (\(model); CPU \(osNameVersion.0) OS \(osNameVersion.2) like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/\(osNameVersion.1) Mobile/15E148 Safari/\(safariVersion)"
     }
 }
 

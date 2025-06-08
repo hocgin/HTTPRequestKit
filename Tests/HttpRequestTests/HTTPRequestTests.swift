@@ -15,7 +15,16 @@ struct HTTPRequestTests {
         // results.
         // XCTAssertEqual(HttpRequest().text, "Hello, World!")
 
-        let request = HTTPRequest.build(baseURL: "https://9cb3e59a017449b081da7defd93dc684.api.mockbin.io/")
+        let custom: HTTPHeaders = [
+            .defaultAcceptEncoding,
+            .defaultAcceptLanguage,
+            .userAgent(HTTPHeader.makeUserAgent()),
+        ]
+
+        let request = HTTPRequest.build(
+            baseURL: "https://9cb3e59a017449b081da7defd93dc684.api.mockbin.io/",
+            headers: custom
+        )
 
         let urlRequest = request.asURLRequest()
         debugPrint("isURLRequest \(urlRequest is URLRequest)")
@@ -45,6 +54,5 @@ struct HTTPRequestTests {
 
         try? await Task.sleep(nanoseconds: 345678987654)
 
-//        request.send(scheduler: .shared)
     }
 }
