@@ -88,7 +88,8 @@ let jsonDecoder: JSONDecoder = {
     let result = try await publisher.values.first(where: { _ in true })
 }
 
-@Test func example2() async throws {
+@Test("测试 publisher 转 async")
+func example2() async throws {
     let custom: HTTPHeaders = [
         .defaultAcceptEncoding,
         .defaultAcceptLanguage,
@@ -106,4 +107,60 @@ let jsonDecoder: JSONDecoder = {
 
     let v = try await publisher.async()
     debugPrint("v = \(v)")
+}
+
+struct TestFmt: Codable {
+    var isOk: Bool = false
+    var status: Status
+    var message: String
+    var datetime: Date
+    var precipitation2h: [Double]
+    var precipitation: [Double]
+    var serverTime: Int
+    var direction: Decimal
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case message
+        case datetime
+        case precipitation2h = "precipitation_2h"
+        case precipitation
+        case serverTime = "server_time"
+        case direction
+    }
+
+    enum Status: String, Codable {
+        case success
+        case failure
+    }
+}
+
+@Test("测试时间格式化")
+func example3() async throws {
+    let jd: JSONDecoder = {
+        let json = JSONDecoder()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mmXXX" // 支持 +08:00
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        json.dateDecodingStrategy = .formatted(formatter)
+        return json
+    }()
+
+    let custom: HTTPHeaders = [
+        .defaultAcceptEncoding,
+        .defaultAcceptLanguage,
+        .userAgent(HTTPHeader.makeUserAgent()),
+    ]
+
+    let request = HTTPRequest.build(
+        baseURL: "https://8d0115cc766f493c8c06f41fc9fd661b.api.mockbin.io/",
+        headers: custom
+    )
+
+    let result = try await request.run(TestFmt.self, jsonDecoder: jd)
+    debugPrint("result = \(result)")
+    debugPrint("result.Date = \(result.datetime.formatted())")
+    debugPrint("result.Decimal = \(result.direction)")
+    debugPrint("result.enum = \(result.status)")
 }
