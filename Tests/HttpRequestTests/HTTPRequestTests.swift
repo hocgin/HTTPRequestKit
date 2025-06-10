@@ -43,7 +43,7 @@ struct TestResp: Codable {
         debugPrint("result4 = \(result4)")
     })
     /// 方式5
-    let publish: AnyPublisher<TestResp, HTTPRequest.HRError> = request.publisher()
+    let publish: AnyPublisher<TestResp, Error> = request.publisher()
     let cancel5 = publish.sink(
         receiveCompletion: { debugPrint("receiveCompletion = \($0)") },
         receiveValue: { result5 in

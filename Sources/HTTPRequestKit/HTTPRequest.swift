@@ -62,20 +62,15 @@ public struct HTTPRequest {
             baseURL: baseURL, path: path, method: method, headers: headers,
             dataType: dataType
         ) { () -> URLRequest in
-
             switch method {
             case .get:
-
                 return getRequest(
                     url, headers: headers, dataType: dataType, method: .get
                 )
-
             case .put, .patch, .post:
-
                 return putPatchPostRequest(
                     url, headers: headers, dataType: dataType, method: method
                 )
-
             case .delete:
                 return deleteRequest(
                     url, headers: headers, dataType: dataType, method: method
@@ -106,12 +101,12 @@ public struct HTTPRequest {
         urlSession: URLSession = URLSession.shared,
         jsonDecoder: JSONDecoder = .default,
         scheduler: S = DispatchQueue.main
-    ) -> AnyPublisher<D, HTTPRequest.HRError> {
+    ) -> AnyPublisher<D, any Error> {
         return urlSession.dataTaskPublisher(for: asURLRequest())
             .assumeHTTP()
             .responseData()
             .decoding(D.self, decoder: jsonDecoder)
-            .catch { (error: HTTPRequest.HRError) -> AnyPublisher<D, HTTPRequest.HRError> in
+            .catch { error -> AnyPublisher<D, Error> in
                 return Fail(error: error).eraseToAnyPublisher()
             }
             .receive(on: scheduler)
@@ -122,12 +117,12 @@ public struct HTTPRequest {
         urlSession: URLSession = URLSession.shared,
         jsonDecoder: JSONDecoder = .default,
         scheduler: S = DispatchQueue.main
-    ) -> AnyPublisher<D, HTTPRequest.HRError> {
+    ) -> AnyPublisher<D, any Error> {
         urlSession.dataTaskPublisher(for: asURLRequest())
             .assumeHTTP()
             .responseData()
             .decoding(D.self, decoder: jsonDecoder)
-            .catch { (error: HTTPRequest.HRError) -> AnyPublisher<D, HTTPRequest.HRError> in
+            .catch { error -> AnyPublisher<D, Error> in
                 return Fail(error: error).eraseToAnyPublisher()
             }
             .receive(on: scheduler)
