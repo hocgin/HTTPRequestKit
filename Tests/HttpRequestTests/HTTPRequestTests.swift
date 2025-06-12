@@ -164,3 +164,54 @@ func example3() async throws {
     debugPrint("result.Decimal = \(result.direction)")
     debugPrint("result.enum = \(result.status)")
 }
+
+@Test("exampleMapXX")
+func exampleMapXX() async throws {
+    let url = "https://httpbin.org/get?sd=sdsxxx"
+    let request = HTTPRequest.build(
+        baseURL: url,
+        method: .get
+    )
+
+    let p: AnyPublisher<Data, any Error> = request.dataTaskPublisher()
+    let data = try? await p.async()
+//    let result = try await publisher.values.first(where: { _ in true })
+    if let data {
+        let result = String(data: data, encoding: .utf8)
+        debugPrint("result = \(result)")
+    }
+    let can = p.sink(receiveCompletion: { completion in
+        switch completion {
+        case .finished:
+            print("✅ 请求成功")
+        case .failure(let error):
+            print("❌ 请求失败：\(error)")
+        }
+    }, receiveValue: { data in
+        print("收到数据：\(String(data: data, encoding: .utf8))")
+    })
+
+//    let data2 = try await request.dataTaskPublisher()
+//        .assumeHTTP()
+//        .responseData()
+    ////        .tryMap { (data, _: URLResponse) in data }
+//        .mapError { $0 as any Error }
+    ////        .receive(on: scheduler)
+//        .eraseToAnyPublisher()
+//        .async()
+    ////        .sink(receiveCompletion: { completion in
+    ////            switch completion {
+    ////            case .finished:
+    ////                print("✅ 请求成功")
+    ////            case .failure(let error):
+    ////                print("❌ 请求失败：\(error)")
+    ////            }
+    ////        }, receiveValue: { data in
+    ////            print("收到数据：\(String(data: data, encoding: .utf8))")
+    ////        })
+//
+//    let result2 = String(data: data2, encoding: .utf8)
+//    debugPrint("result = \(result2)")
+
+    try await Task.sleep(nanoseconds: 600000000000)
+}

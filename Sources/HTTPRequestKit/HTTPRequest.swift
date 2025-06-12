@@ -88,7 +88,7 @@ public struct HTTPRequest {
         baseURL: String,
         method: Method = .get,
         headers: HTTPHeaders = .default,
-        path: String = "",
+        path: String? = nil,
         dataType: DataType = .none,
         urlQueryItems: [URLQueryItem]? = nil
     ) -> Self {
@@ -139,7 +139,8 @@ public struct HTTPRequest {
         scheduler: S = DispatchQueue.main
     ) -> AnyPublisher<Data, any Error> {
         urlSession.dataTaskPublisher(for: asURLRequest())
-            .tryMap { (data, _: URLResponse) in data }
+            .assumeHTTP()
+            .responseData()
             .mapError { $0 as any Error }
             .receive(on: scheduler)
             .eraseToAnyPublisher()
@@ -213,7 +214,9 @@ public extension JSONDecoder {
 extension HTTPRequest {
     var pathAppendedURL: URL {
         var url = baseURL
-        url.appendPathComponent(path)
+        if let path {
+            url.appendPathComponent(path)
+        }
         return url
     }
 }
