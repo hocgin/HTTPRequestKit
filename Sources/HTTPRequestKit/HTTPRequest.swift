@@ -3,7 +3,7 @@ import Foundation
 
 public struct HTTPRequest {
     public var baseURL: URL
-    public var path: String
+    public var path: String?
     public var method: Method
     public var headers: HTTPHeaders
     public var dataType: DataType
@@ -51,15 +51,20 @@ public struct HTTPRequest {
         baseURL: URL,
         method: Method = .get,
         headers: HTTPHeaders = .default,
-        path: String = "",
+        path: String? = nil,
         dataType: DataType = .none,
         urlQueryItems: [URLQueryItem]? = nil
     ) -> Self {
         var url = baseURL
-        url.appendPathComponent(path)
+        if let path {
+            url.appendPathComponent(path)
+        }
 
         return .init(
-            baseURL: baseURL, path: path, method: method, headers: headers,
+            baseURL: baseURL,
+            path: path,
+            method: method,
+            headers: headers,
             dataType: dataType
         ) { () -> URLRequest in
             switch method {
