@@ -8,6 +8,38 @@ struct TestResp: Codable {
     var message: String
 }
 
+let jsonDecoder: JSONDecoder = {
+    let json = JSONDecoder()
+    json.keyDecodingStrategy = .convertFromSnakeCase
+    return json
+}()
+
+struct TestFmt: Codable {
+    var isOk: Bool = false
+    var status: Status
+    var message: String
+    var datetime: Date
+    var precipitation2h: [Double]
+    var precipitation: [Double]
+    var serverTime: Int
+    var direction: Decimal
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case message
+        case datetime
+        case precipitation2h = "precipitation_2h"
+        case precipitation
+        case serverTime = "server_time"
+        case direction
+    }
+
+    enum Status: String, Codable {
+        case success
+        case failure
+    }
+}
+
 @Test func testExample() async throws {
     // This is an example of a functional test case.
     // Use XCTAssert and related functions to verify your tests produce the correct
@@ -54,12 +86,6 @@ struct TestResp: Codable {
     try? await Task.sleep(nanoseconds: 345678987654)
 }
 
-let jsonDecoder: JSONDecoder = {
-    let json = JSONDecoder()
-    json.keyDecodingStrategy = .convertFromSnakeCase
-    return json
-}()
-
 @Test func example() async throws {
     let custom: HTTPHeaders = [
         .defaultAcceptEncoding,
@@ -88,8 +114,7 @@ let jsonDecoder: JSONDecoder = {
     let result = try await publisher.values.first(where: { _ in true })
 }
 
-@Test("测试 publisher 转 async")
-func example2() async throws {
+@Test("测试 publisher 转 async") func example2() async throws {
     let custom: HTTPHeaders = [
         .defaultAcceptEncoding,
         .defaultAcceptLanguage,
@@ -109,34 +134,7 @@ func example2() async throws {
     debugPrint("v = \(v)")
 }
 
-struct TestFmt: Codable {
-    var isOk: Bool = false
-    var status: Status
-    var message: String
-    var datetime: Date
-    var precipitation2h: [Double]
-    var precipitation: [Double]
-    var serverTime: Int
-    var direction: Decimal
-
-    enum CodingKeys: String, CodingKey {
-        case status
-        case message
-        case datetime
-        case precipitation2h = "precipitation_2h"
-        case precipitation
-        case serverTime = "server_time"
-        case direction
-    }
-
-    enum Status: String, Codable {
-        case success
-        case failure
-    }
-}
-
-@Test("测试时间格式化")
-func example3() async throws {
+@Test("测试时间格式化") func example3() async throws {
     let jd: JSONDecoder = {
         let json = JSONDecoder()
         let formatter = DateFormatter()
@@ -165,8 +163,7 @@ func example3() async throws {
     debugPrint("result.enum = \(result.status)")
 }
 
-@Test("exampleMapXX")
-func exampleMapXX() async throws {
+@Test("exampleMapXX") func exampleMapXX() async throws {
     let url = "https://httpbin.org/get?sd=sdsxxx"
     let request = HTTPRequest.build(
         baseURL: url,
@@ -212,6 +209,42 @@ func exampleMapXX() async throws {
 //
 //    let result2 = String(data: data2, encoding: .utf8)
 //    debugPrint("result = \(result2)")
+
+    try await Task.sleep(nanoseconds: 600000000000)
+}
+
+@Test("测试超时") func testTimeout() async throws {}
+
+@Test("错误重试") func testRetry() async throws {
+    let url = "https://httpbin.org/get?sd=sdsxxx"
+    let request = HTTPRequest.build(
+        baseURL: url,
+        method: .get
+    )
+
+    let publisher: AnyPublisher<Data, any Error> = request.dataTaskPublisher()
+
+    func simulatedRequest() -> AnyPublisher<Data, Error> {
+        Just("✅ Success".data(using: .utf8)!)
+            .delay(for: .seconds(2), scheduler: RunLoop.main)
+            .setFailureType(to: Error.self)
+            .eraseToAnyPublisher()
+    }
+    let mockPublisher = simulatedRequest()
+
+    let can = mockPublisher
+        .timeout(.seconds(1), scheduler: RunLoop.main, customError: { URLError(.timedOut) }) // 1秒超时
+        .retry(3)
+        .sink(receiveCompletion: { completion in
+            switch completion {
+            case .finished:
+                print("✅ 请求成功")
+            case .failure(let error):
+                print("❌ 请求失败：\(error)")
+            }
+        }, receiveValue: { data in
+            print("收到数据：\(String(data: data, encoding: .utf8))")
+        })
 
     try await Task.sleep(nanoseconds: 600000000000)
 }
